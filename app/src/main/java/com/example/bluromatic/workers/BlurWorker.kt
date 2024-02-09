@@ -3,10 +3,14 @@ import androidx.work.WorkerParameters
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.util.Log
+import com.example.bluromatic.DELAY_TIME_MILLIS
 import com.example.bluromatic.R
 import com.example.bluromatic.workers.blurBitmap
 import com.example.bluromatic.workers.makeStatusNotification
 import com.example.bluromatic.workers.writeBitmapToFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 private const val TAG = "BlurWorker"
 
@@ -16,30 +20,37 @@ class BlurWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, 
             applicationContext.resources.getString(R.string.blurring_image),
             applicationContext
         )
-        return try {
-            val picture = BitmapFactory.decodeResource(
-                applicationContext.resources,
-                R.drawable.android_cupcake
-            )
+        //return withContext(Dispatchers.IO) try {
+        return withContext(Dispatchers.IO) {
+            //return try {
+            return@withContext try{
 
-            val output = blurBitmap(picture, 1)
+                delay(DELAY_TIME_MILLIS)
 
-            // Write bitmap to a temp file
-            val outputUri = writeBitmapToFile(applicationContext, output)
+                val picture = BitmapFactory.decodeResource(
+                    applicationContext.resources,
+                    R.drawable.android_cupcake
+                )
 
-            makeStatusNotification(
-                "Output is $outputUri",
-                applicationContext
-            )
+                val output = blurBitmap(picture, 1)
 
-            Result.success()
-        } catch (throwable: Throwable) {
-            Log.e(
-                TAG,
-                applicationContext.resources.getString(R.string.error_applying_blur),
-                throwable
-            )
-            Result.failure()
+                // Write bitmap to a temp file
+                val outputUri = writeBitmapToFile(applicationContext, output)
+
+                makeStatusNotification(
+                    "Output is $outputUri",
+                    applicationContext
+                )
+
+                Result.success()
+            } catch (throwable: Throwable) {
+                Log.e(
+                    TAG,
+                    applicationContext.resources.getString(R.string.error_applying_blur),
+                    throwable
+                )
+                Result.failure()
+            }
         }
     }
 }
